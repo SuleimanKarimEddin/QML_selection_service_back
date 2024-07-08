@@ -5,6 +5,7 @@ use App\Http\Controllers\SelectionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+Route::get('/', function () {return 'heello';});
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -22,4 +23,5 @@ Route::controller(PaymentController::class)->prefix('payment')->group(function (
     Route::get('/success', 'success')->name('payment.success');
     Route::get('/cancel', 'cancel')->name('payment.cancel');
 });
+// upload csv file
 Route::middleware('auth:sanctum')->post('/uploadCsv', [SelectionController::class, 'uploadCsv']);
