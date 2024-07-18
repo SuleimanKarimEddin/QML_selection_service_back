@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  php-service:
+    build:
+      context: .
+    ports:
+      - "8181:8181"
+    networks:
+      - app-network
+
+  python-service:
+    build:
+      context: ./quantum
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

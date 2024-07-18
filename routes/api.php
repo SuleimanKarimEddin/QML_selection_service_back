@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\FilesController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SelectionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-Route::get('/', function () {return 'heello';});
+
+Route::get('/', function () {
+    return 'heello';
+});
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -25,3 +29,12 @@ Route::controller(PaymentController::class)->prefix('payment')->group(function (
 });
 // upload csv file
 Route::middleware('auth:sanctum')->post('/uploadCsv', [SelectionController::class, 'uploadCsv']);
+Route::post('/pdf', [SelectionController::class, 'test']);
+
+
+Route::middleware('auth:sanctum')->controller(FilesController::class)->group(function () {
+
+    Route::get('/getAllFiles', 'getAllFiles');
+    Route::post('/delete', 'delete');
+    Route::post('/upload', 'upload');
+});

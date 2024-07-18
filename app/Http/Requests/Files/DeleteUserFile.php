@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Files;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SelectionRequest extends FormRequest
+class DeleteUserFile extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,8 +22,7 @@ class SelectionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => 'required|file|mimes:csv,txt',
-            'target_column_name' => 'required|string',
+            'url' => 'required|string',
         ];
     }
 }

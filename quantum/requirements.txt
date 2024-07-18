@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+numpy
+seaborn
+matplotlib
+pandas
+scikit-learn
+dwave-ocean-sdk
+fpdf
+dwave-scikit-learn-plugin
