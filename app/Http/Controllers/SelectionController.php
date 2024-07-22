@@ -42,6 +42,10 @@ class SelectionController extends Controller
     
         return response()->json(['error' => 'Failed to generate report'], 500);
     }
+    public function userAttemps(){
+        $user = auth()->user();
+        return response()->json($user->attemps);
+    }
     public function test(SelectionRequest $request){
         $file = $request->file('file');
         $targetColumnName = $request->input('target_column_name');

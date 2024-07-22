@@ -2,17 +2,21 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\PaymentResource\Pages\ListPayments;
-use App\Models\Payment;
+use App\Filament\Resources\FilesResource\Pages;
+use App\Filament\Resources\FilesResource\RelationManagers;
+use App\Models\Files;
+use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class PaymentResource extends Resource
+class FilesResource extends Resource
 {
-    protected static ?string $model = Payment::class;
+    protected static ?string $model = Files::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -29,10 +33,7 @@ class PaymentResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id'),
-                TextColumn::make('payment_id'),
-                TextColumn::make('status'),
-                TextColumn::make('attemps'),
-                TextColumn::make('price'),
+                TextColumn::make('url'),
                 TextColumn::make('user_id'),
             ])
             ->filters([
@@ -58,7 +59,9 @@ class PaymentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListPayments::route('/'),
+            'index' => Pages\ListFiles::route('/'),
+            'create' => Pages\CreateFiles::route('/create'),
+            'edit' => Pages\EditFiles::route('/{record}/edit'),
         ];
     }
 }

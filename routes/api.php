@@ -29,6 +29,8 @@ Route::controller(PaymentController::class)->prefix('payment')->group(function (
 });
 // upload csv file
 Route::middleware('auth:sanctum')->post('/uploadCsv', [SelectionController::class, 'uploadCsv']);
+Route::middleware('auth:sanctum')->post('/attemps', [SelectionController::class, 'userAttemps']);
+
 Route::post('/pdf', [SelectionController::class, 'test']);
 
 
