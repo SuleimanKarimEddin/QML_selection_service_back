@@ -20,48 +20,23 @@ import tempfile
 app = FastAPI()
 
 def generate_feature_selection_report(data, target_column_name):
-    # Extract features and target
     X = data.drop(columns=[target_column_name])
-    y = data[target_column_name]
-
-    # Splitting the dataset into training and testing sets
+    y = data[target_column_name]    
+    X = X.astype(np.float64)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # Feature selection using quantum annealing
-    quantum_selector = SelectFromQuadraticModel(num_features=20, time_limit=30)
+    quantum_selector = SelectFromQuadraticModel(num_features=6, time_limit=5)
     X_train_quantum = quantum_selector.fit_transform(X_train, y_train)
     X_test_quantum = quantum_selector.transform(X_test)
-
-    # Feature selection using classical method (L1-based LinearSVC)
-    classical_selector = SelectFromModel(LinearSVC(C=0.01, penalty="l1", dual=False).fit(X_train, y_train), prefit=True)
-    X_train_classical = classical_selector.transform(X_train)
-    X_test_classical = classical_selector.transform(X_test)
-
-    # Feature selection using PCA
-    pca = PCA(n_components=10)
-    X_train_pca = pca.fit_transform(X_train)
-    X_test_pca = pca.transform(X_test)
-
-    # Feature selection using RFE
-    rfe_selector = RFE(RandomForestClassifier(n_estimators=100, random_state=42), n_features_to_select=20, step=1)
+    quantum_selected_features = X.columns[quantum_selector.get_support()]
+    rfe_selector = RFE(RandomForestClassifier(n_estimators=10, random_state=42), n_features_to_select=6, step=1)
     X_train_rfe = rfe_selector.fit_transform(X_train, y_train)
     X_test_rfe = rfe_selector.transform(X_test)
+    rfe_selected_features = X.columns[rfe_selector.get_support()]
 
-    # Function to evaluate classifiers with detailed metrics
-    def evaluate_classifier(X_train, X_test, y_train, y_test, method):
+    def evaluate_classifier(X_train, X_test, y_train, y_test, method, selected_features):
         clf = RandomForestClassifier(random_state=42)
-        param_grid = {
-            'n_estimators': [50, 100, 200],
-            'max_depth': [None, 10, 20, 30],
-            'min_samples_split': [2, 5, 10],
-            'min_samples_leaf': [1, 2, 4]
-        }
-        grid_search = GridSearchCV(clf, param_grid, cv=3, scoring='accuracy')
-        grid_search.fit(X_train, y_train)
-        best_clf = grid_search.best_estimator_
-
-        y_pred = best_clf.predict(X_test)
-
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
         precision = precision_score(y_test, y_pred, average='weighted')
         recall = recall_score(y_test, y_pred, average='weighted')
@@ -69,7 +44,7 @@ def generate_feature_selection_report(data, target_column_name):
 
         report = {
             "Method": method,
-            "Best Parameters": grid_search.best_params_,
+            "Selected Features": selected_features,
             "Accuracy": accuracy,
             "Precision": precision,
             "Recall": recall,
@@ -80,19 +55,14 @@ def generate_feature_selection_report(data, target_column_name):
 
         return report
 
-    # Evaluate all feature selection methods
-    quantum_results = evaluate_classifier(X_train_quantum, X_test_quantum, y_train, y_test, "Quantum Annealing")
-    classical_results = evaluate_classifier(X_train_classical, X_test_classical, y_train, y_test, "Classical")
-    pca_results = evaluate_classifier(X_train_pca, X_test_pca, y_train, y_test, "PCA")
-    rfe_results = evaluate_classifier(X_train_rfe, X_test_rfe, y_train, y_test, "RFE")
-
-    # Prepare results for plotting
+    quantum_results = evaluate_classifier(X_train_quantum, X_test_quantum, y_train, y_test, "RFE", quantum_selected_features)
+    rfe_results = evaluate_classifier(X_train_rfe, X_test_rfe, y_train, y_test, "Quantum Annealing", rfe_selected_features)
     results = pd.DataFrame({
-        'Method': ['Quantum Annealing', 'Classical', 'PCA', 'RFE'],
-        'Accuracy': [quantum_results["Accuracy"], classical_results["Accuracy"], pca_results["Accuracy"], rfe_results["Accuracy"]],
-        'Precision': [quantum_results["Precision"], classical_results["Precision"], pca_results["Precision"], rfe_results["Precision"]],
-        'Recall': [quantum_results["Recall"], classical_results["Recall"], pca_results["Recall"], rfe_results["Recall"]],
-        'F1-score': [quantum_results["F1-score"], classical_results["F1-score"], pca_results["F1-score"], rfe_results["F1-score"]]
+        'Method': ['RFE', 'Quantum Annealing'],
+        'Accuracy': [quantum_results["Accuracy"], rfe_results["Accuracy"]],
+        'Precision': [quantum_results["Precision"], rfe_results["Precision"]],
+        'Recall': [quantum_results["Recall"], rfe_results["Recall"]],
+        'F1-score': [quantum_results["F1-score"], rfe_results["F1-score"]]
     })
 
     # Plotting the results using seaborn
@@ -141,11 +111,11 @@ def generate_feature_selection_report(data, target_column_name):
     pdf.chapter_body(f'Dataset shape: {X.shape}\nNumber of classes: {len(np.unique(y))}\n')
 
     # Add results for each method
-    methods = [quantum_results, classical_results, pca_results, rfe_results]
+    methods = [rfe_results, quantum_results]
     for method in methods:
         pdf.chapter_title(f'{method["Method"]} Method')
         body = (
-            f'Best Parameters: {method["Best Parameters"]}\n'
+            f'Selected Features: {", ".join(method["Selected Features"])}\n'
             f'Accuracy: {method["Accuracy"]}\n'
             f'Precision: {method["Precision"]}\n'
             f'Recall: {method["Recall"]}\n'
@@ -159,11 +129,14 @@ def generate_feature_selection_report(data, target_column_name):
     pdf.chapter_title('Comparison Plots')
     pdf.add_image('feature_selection_comparison.png')
 
+
+
     # Save PDF
-    pdf_file_path = 'feature_selection_report.pdf'
+    pdf_file_path = 'QFSS-Report.pdf'
     pdf.output(pdf_file_path)
 
     return pdf_file_path
+
 
 
 def generate_empty_pdf(file_path):

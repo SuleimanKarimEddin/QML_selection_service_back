@@ -67,7 +67,7 @@ class PaymentController extends Controller
             ]);
         }
 
-        return redirect('https://google.com');
+        return redirect('http://localhost:3000/qfss');
     }
 
     public function cancel(Request $request)
@@ -77,7 +77,6 @@ class PaymentController extends Controller
         $payment->update([
             'status' => 'cancel',
         ]);
-
-        return redirect('https://youtube.com');
+        return redirect('http://localhost:3000/qfss');
     }
 }
